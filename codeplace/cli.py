@@ -5,6 +5,7 @@
                       [--location RAM|ITCM] [--exclude name,...]
     codeplace colour  <map> <out.ld> <image-map>:<pcs> ... --sets S --ways W --line L --start ADDR --origin ADDR
     codeplace check   <map> <out.ld.plan.tsv>
+    codeplace callers <map> <pairs> --functions name,...   (pairs: alternating PC and LR lines)
 
 <map> is the linker map of the image to be changed; profiles may come from other builds of the same
 objects (<image-map> is the map of the sampled image). PCs: one hex value per line.
@@ -59,6 +60,11 @@ def main(argv=None):
     h = sub.add_parser("check")
     h.add_argument("map")
     h.add_argument("plan")
+    r = sub.add_parser("callers", help="who calls the given functions: LR of samples whose PC is in them")
+    r.add_argument("map")
+    r.add_argument("pairs")
+    r.add_argument("--functions", required=True, help="section names without .text., comma separated")
+    r.add_argument("--top", type=int, default=25)
     args = ap.parse_args(argv)
     args.win = mapfile.parse_windows(args.windows)
     secs = mapfile.sections(args.map, args.win)
@@ -98,6 +104,11 @@ def main(argv=None):
         n = [len(s) for s in load]
         print(f"{len(placed)} sections -> {args.out}; sets by executed-line count: "
               + ", ".join(f"{k}: {n.count(k)}" for k in range(max(n, default=0) + 1)))
+        return 0
+    if args.cmd == "callers":
+        v = profile.load_pcs(args.pairs)
+        text = profile.callers(secs, list(zip(v[0::2], v[1::2])), set(args.functions.split(",")), args.top)
+        print(text)
         return 0
     if args.cmd == "check":
         rows = [(n, p, int(a, 16)) for n, p, a in (line.rstrip("\n").split("\t") for line in open(args.plan))]

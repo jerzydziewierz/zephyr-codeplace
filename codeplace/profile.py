@@ -74,3 +74,20 @@ def report(secs, pcs, line, windows, lib_of, idle_names=(), top=40):
         out.append(f"sections with >= {k:2d} samples: {len(hot)}, {sum(secs[i].size for i in hot)} B, "
                    f"executed lines {sum(len(lines[i]) for i in hot)} ({line * sum(len(lines[i]) for i in hot)} B)")
     return "\n".join(out), per
+
+
+def callers(secs, pairs, functions, top=25):
+    """Text table: for samples whose PC is in one of `functions` (names without ".text."), the
+    function that holds the sampled LR. LR is the caller for a leaf function, or for a sample taken
+    before the function's first call; treat the result as an attribution estimate."""
+    starts = [s.addr for s in secs]
+
+    def name(a):
+        a &= ~1
+        i = bisect.bisect_right(starts, a) - 1
+        return secs[i].name[len(".text."):] if i >= 0 and a < secs[i].addr + secs[i].size else f"0x{a:08x}"
+    hits = Counter((name(pc), name(lr)) for pc, lr in pairs if name(pc) in functions)
+    n = sum(hits.values())
+    out = [f"{len(pairs)} samples, {n} in {', '.join(sorted(functions))}"]
+    out += [f"  {100 * c / max(n, 1):5.1f} %  {f:32s} <- {caller}" for (f, caller), c in hits.most_common(top)]
+    return "\n".join(out)

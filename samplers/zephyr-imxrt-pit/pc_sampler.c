@@ -6,13 +6,15 @@
  * reads the PC from the stacked exception frame of the interrupted context. Handler code is in
  * ITCM and the sample buffer in DTCM, so the sampler does not use the I-cache, the D-cache or
  * the flash. The interval varies by +-25 % (LFSR) so that periodic work does not alias.
- * Shell: "pcs start <hz>", "pcs status", "pcs dump" (lines "PCS <hex> ..."), "pcs stop".
+ * Shell: "pcs start <hz> [lr]" (lr: store PC, LR pairs, LR = caller of a leaf), "pcs status", "pcs dump" (lines "PCS <hex> ..."), "pcs stop";
+ * "pcs mutex" times uncontended k_mutex lock + unlock pairs with the DWT cycle counter.
  */
 
 #include <zephyr/kernel.h>
 #include <zephyr/irq.h>
 #include <zephyr/shell/shell.h>
 #include <zephyr/linker/section_tags.h>
+#include <string.h>
 #include <fsl_clock.h>
 
 #define PCS_N CONFIG_CODEPLACE_PC_SAMPLER_N
@@ -21,6 +23,7 @@ static __dtcm_bss_section uint32_t pcs_buf[PCS_N];
 static __dtcm_bss_section volatile uint32_t pcs_n;
 static __dtcm_bss_section uint32_t pcs_lfsr;
 static __dtcm_bss_section uint32_t pcs_base;
+static __dtcm_bss_section uint32_t pcs_pairs;
 static uint32_t pcs_t0, pcs_t1;
 
 /* Called from pcs_isr with the exception frame; returns through EXC_RETURN in lr. */
@@ -29,9 +32,12 @@ __itcm_section void codeplace_pcs_record(uint32_t *frame)
 	uint32_t n = pcs_n;
 
 	PIT->CHANNEL[0].TFLG = PIT_TFLG_TIF_MASK;
-	if (n < PCS_N) {
+	if (n + pcs_pairs < PCS_N) {
 		pcs_buf[n] = frame[6];
-		pcs_n = n + 1U;
+		if (pcs_pairs) {
+			pcs_buf[n + 1U] = frame[5];
+		}
+		pcs_n = n + 1U + pcs_pairs;
 	} else {
 		PIT->CHANNEL[0].TCTRL = 0U;
 	}
@@ -52,6 +58,8 @@ __itcm_section __attribute__((naked)) void codeplace_pcs_isr(void)
 static int cmd_start(const struct shell *sh, size_t argc, char **argv)
 {
 	uint32_t hz = argc > 1 ? strtoul(argv[1], NULL, 0) : 10000U;
+
+	pcs_pairs = (argc > 2 && strcmp(argv[2], "lr") == 0) ? 1U : 0U;
 	uint32_t f;
 
 	CLOCK_EnableClock(kCLOCK_Pit);
@@ -74,8 +82,10 @@ static int cmd_status(const struct shell *sh, size_t argc, char **argv)
 {
 	uint32_t n = pcs_n;
 
-	if (n < PCS_N) {
+	if (n + 1U < PCS_N) {
 		pcs_t1 = k_uptime_get_32();
+	} else {
+		n = PCS_N;
 	}
 	shell_print(sh, "PCS n %u of %u, %u ms", n, PCS_N, pcs_t1 - pcs_t0);
 	return 0;
@@ -103,11 +113,35 @@ static int cmd_dump(const struct shell *sh, size_t argc, char **argv)
 	return 0;
 }
 
+static int cmd_mutex(const struct shell *sh, size_t argc, char **argv)
+{
+	static struct k_mutex m;
+	uint32_t t0, t1, t2;
+
+	k_mutex_init(&m);
+	CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
+	DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
+	t0 = DWT->CYCCNT;
+	for (int i = 0; i < 1000; i++) {
+		__asm__ volatile("" ::: "memory");
+	}
+	t1 = DWT->CYCCNT;
+	for (int i = 0; i < 1000; i++) {
+		k_mutex_lock(&m, K_FOREVER);
+		k_mutex_unlock(&m);
+	}
+	t2 = DWT->CYCCNT;
+	shell_print(sh, "PCS mutex lock+unlock: %u cycles per pair (loop %u)", ((t2 - t1) - (t1 - t0)) / 1000U,
+		    (t1 - t0) / 1000U);
+	return 0;
+}
+
 SHELL_STATIC_SUBCMD_SET_CREATE(pcs_cmds,
-	SHELL_CMD_ARG(start, NULL, "start sampling [hz]", cmd_start, 1, 1),
+	SHELL_CMD_ARG(start, NULL, "start sampling [hz] [lr]; lr: store (PC, LR) pairs", cmd_start, 1, 2),
 	SHELL_CMD(status, NULL, "samples taken", cmd_status),
 	SHELL_CMD(stop, NULL, "stop sampling", cmd_stop),
 	SHELL_CMD(dump, NULL, "print the samples", cmd_dump),
+	SHELL_CMD(mutex, NULL, "cycles per uncontended k_mutex lock + unlock", cmd_mutex),
 	SHELL_SUBCMD_SET_END);
 SHELL_CMD_REGISTER(pcs, &pcs_cmds, "PC sampler (codeplace)", NULL);
 

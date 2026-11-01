@@ -34,6 +34,7 @@ Build these A/B images and measure both metrics:
 - Without a probe: an on-target sampler (`samplers/zephyr-imxrt-pit/`): a timer interrupt above the kernel's interrupt lock level records the stacked PC into a buffer; its code in tightly coupled/fast memory and its buffer in non-cached fast data memory, so that it does not disturb the caches or the flash. Vary the interval (LFSR) against aliasing.
 - `python -m codeplace --windows <code ranges> profile <map> <pcs> --idle .text.arch_cpu_idle --line <cache line>` → busy share per memory window, per library, per function; executed lines.
 - Exclude idle and busy-wait functions (many samples, few misses).
+- Once compute-bound, find the expensive call sites: sample (PC, LR) pairs (`pcs start <hz> lr`) and run `codeplace callers <map> <pairs> --functions <f,...>`; LR is the caller for leaf functions (an estimate). Pair it with a micro-benchmark of the function (cycles per call) to estimate calls per event.
 - Read the per-window line: if the share of busy time in flash is small after a placement, more placement will not help; the path is now compute- or data-bound.
 
 ## 3. Placement, most portable first
@@ -41,7 +42,7 @@ Build these A/B images and measure both metrics:
 1. **Name list** of the densest functions (samples or line weight per byte) into fast memory: `codeplace pick <map> <out> <map>:<pcs> --budget <bytes> --format relocate --location RAM|ITCM` (Zephyr CMake) or `--format ramfunc` (linker snippet; works with LTO if `.ramfunc` comes before `.text` in the linker script). Make a size curve (e.g. 4–32 KB). Names survive most code changes.
 2. **Cache colouring** of the remaining hot code: `codeplace colour ... --sets --ways --line --start --origin`, then `codeplace check`. Build-specific: regenerate per build.
 3. **Whole files/libraries** when fast memory is plentiful (i.MX RT ITCM 128 KB+): simplest, robust.
-4. Then compiler and configuration (only after placement, because a fetch-bound image hides them): `-O2` for the hot code, fewer thread hand-offs, fewer locks.
+4. Then compiler and configuration (only after placement, because a fetch-bound image hides them): `-O2` for the hot code; per-context-switch costs (MPU stack guard reprogramming, time-slice timeouts); fewer locks. Measure throughput, not only latency: removing worker threads lowered latency but cut throughput by a third and caused overload collapse (Zephyr `NET_TC_*_COUNT=0`, ⛔).
 
 ## 4. Footguns (each one cost a day once)
 

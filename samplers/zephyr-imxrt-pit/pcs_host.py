@@ -1,7 +1,7 @@
 """Host side of the on-target PC sampler (pc_sampler.c): start, load, dump.
 
     python pcs_host.py <console> <out.txt> [--mode udp|ping|idle] [--dst 192.0.2.1:4242]
-                       [--rate 1000] [--hz 10000] [--runs 4]
+                       [--rate 1000] [--hz 10000] [--runs 4] [--lr]
 
 <console> is the Zephyr shell serial port of the board. Per run: "pcs start <hz>", load (UDP
 datagrams to --dst at <rate>/s, ping at 1/rate s, or none) until the sample buffer is full,
@@ -46,7 +46,7 @@ def udp_load(dst, rate, stop, counts):
 
 
 def one_run(con, args):
-    print(command(con, f"pcs start {args.hz}", rb"PCS start[^\r\n]*\r?\n").strip().splitlines()[-1])
+    print(command(con, f"pcs start {args.hz}{' lr' if args.lr else ''}", rb"PCS start[^\r\n]*\r?\n").strip().splitlines()[-1])
     stop, counts, load = threading.Event(), [0, 0], None
     if args.mode == "udp":
         load = threading.Thread(target=udp_load, args=(args.dst, args.rate, stop, counts))
@@ -88,6 +88,7 @@ def main():
     ap.add_argument("--rate", type=float, default=1000.0)
     ap.add_argument("--hz", type=int, default=10000)
     ap.add_argument("--runs", type=int, default=4)
+    ap.add_argument("--lr", action="store_true", help="store (PC, LR) pairs: the file alternates PC and LR lines (codeplace callers)")
     args = ap.parse_args()
     host, port = args.dst.rsplit(":", 1)
     args.dst = (host, int(port))

@@ -11,7 +11,7 @@ On MCUs without on-chip flash, the CPU fetches code through a small cache from Q
 | Board | Workload | Stock | After placement | Fast memory used |
 |---|---|---|---|---|
 | Raspberry Pi Pico (RP2040, 125 MHz, 16 KB XIP cache) | UDP echo over USB CDC-ECM, peak rate | 322/s | 2,248/s (hot functions + colouring + LTO) | 17 KB SRAM |
-| Teensy 4.1 (i.MX RT1062, 600 MHz, 32 KB I-cache) | UDP echo over USB CDC-ECM, peak rate | 2,257/s | 15,921/s (32 KB hot-function name list in ITCM); 17,785/s (same list, `-O2`) | 34–39 KB ITCM |
+| Teensy 4.1 (i.MX RT1062, 600 MHz, 32 KB I-cache) | UDP echo over USB CDC-ECM, peak rate | 2,257/s | 15,921/s (32 KB hot-function name list in ITCM); 17,785/s (same list, `-O2`); 22,359/s (net, USB, kernel in ITCM, `-O2`, CDC-NCM, tuning) | 34–78 KB ITCM |
 
 ## Contents
 
@@ -19,6 +19,7 @@ On MCUs without on-chip flash, the CPU fetches code through a small cache from Q
   - `mapfile` — GNU ld map parser (input sections, archive members, LTO objects, exact ld patterns).
   - `profile` — PC samples → time per memory window, library and function; executed cache lines; profile merge across differently linked images.
   - `place` — densest-function picker; emitters for Zephyr `zephyr_code_relocate(... FILTER ...)` and `.ramfunc` linker snippets; cache colouring for any (sets, ways, line) geometry; placement check.
+  - `codeplace callers` — from (PC, LR) sample pairs, which call sites spend the time in a given function (e.g. who takes the mutexes).
 - `samplers/openocd/dwt_pcsr.sh` — non-intrusive PC sampling over SWD (DWT_PCSR).
 - `samplers/zephyr-imxrt-pit/` — on-target PC sampler for i.MX RT10xx boards without a debug probe (PIT interrupt at zero-latency priority, handler in ITCM, buffer in DTCM) and its host script.
 - `skill/SKILL.md` — the procedure as a checklist for an engineer or an AI coding agent: decision points, measurement rules, footguns.
