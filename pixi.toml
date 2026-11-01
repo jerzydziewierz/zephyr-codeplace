@@ -1,5 +1,5 @@
 [workspace]
-name = "codeplace"
+name = "zephyr-codeplace"
 version = "0.1.0"
 description = "Code placement for MCUs that execute from cached flash"
 channels = ["https://repo.anaconda.com/pkgs/main"]

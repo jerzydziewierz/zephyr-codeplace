@@ -1,0 +1,8 @@
+/* All RAM data (stacks, network buffers, kernel objects) in DTCM. Do not combine with
+ * CONFIG_CODEPLACE_PC_SAMPLER (its DTCM buffer would overlap the RAM contents).
+ */
+/ {
+	chosen {
+		zephyr,sram = &dtcm;
+	};
+};

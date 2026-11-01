@@ -1,0 +1,4 @@
+/* CDC-ECM instead of CDC-NCM (-DEXTRA_DTC_OVERLAY_FILE=ecm.overlay). */
+&usb_eth0 {
+	compatible = "zephyr,cdc-ecm-ethernet";
+};

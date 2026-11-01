@@ -143,7 +143,7 @@ SHELL_STATIC_SUBCMD_SET_CREATE(pcs_cmds,
 	SHELL_CMD(dump, NULL, "print the samples", cmd_dump),
 	SHELL_CMD(mutex, NULL, "cycles per uncontended k_mutex lock + unlock", cmd_mutex),
 	SHELL_SUBCMD_SET_END);
-SHELL_CMD_REGISTER(pcs, &pcs_cmds, "PC sampler (codeplace)", NULL);
+SHELL_CMD_REGISTER(pcs, &pcs_cmds, "PC sampler (zephyr-codeplace)", NULL);
 
 static int pcs_init(void)
 {

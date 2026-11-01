@@ -1,0 +1,26 @@
+# SPDX-License-Identifier: Apache-2.0
+
+menu "codeplace"
+
+config CODEPLACE_PC_SAMPLER
+	bool "On-target PC sampler (i.MX RT10xx: PIT interrupt, ITCM handler, DTCM buffer)"
+	depends on SOC_SERIES_IMXRT10XX
+	depends on SHELL
+	select ZERO_LATENCY_IRQS
+	help
+	  Samples the interrupted program counter (and optionally the link
+	  register) from a zero-latency PIT interrupt into a DTCM buffer, for
+	  boards without a debug probe. Shell command "pcs". Host side:
+	  tools/pcs_host.py; analysis: python -m codeplace profile|callers.
+	  Do not combine with a devicetree that makes DTCM the system RAM
+	  (zephyr,sram = &dtcm): Zephyr then places __dtcm_bss_section data
+	  over the normal RAM contents without a link error.
+
+config CODEPLACE_PC_SAMPLER_N
+	int "Number of PC samples per run"
+	depends on CODEPLACE_PC_SAMPLER
+	default 16384
+	help
+	  Each sample takes 4 bytes of DTCM.
+
+endmenu

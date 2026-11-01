@@ -1,0 +1,8 @@
+/* Console on UART0. */
+/ {
+	usb_eth0: usb_eth0 {
+		compatible = "zephyr,cdc-ncm-ethernet";
+		local-mac-address = [02 00 5e 00 53 01];
+		remote-mac-address = "02005E005302";
+	};
+};

@@ -1,6 +1,6 @@
-"""Host side of the on-target PC sampler (pc_sampler.c): start, load, dump.
+"""Host side of the on-target PC sampler (CONFIG_CODEPLACE_PC_SAMPLER, zephyr/src/pc_sampler_imxrt.c).
 
-    python pcs_host.py <console> <out.txt> [--mode udp|ping|idle] [--dst 192.0.2.1:4242]
+    python tools/pcs_host.py <console> <out.txt> [--mode udp|ping|idle] [--dst 192.0.2.1:4242]
                        [--rate 1000] [--hz 10000] [--runs 4] [--lr]
 
 <console> is the Zephyr shell serial port of the board. Per run: "pcs start <hz>", load (UDP

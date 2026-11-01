@@ -1,0 +1,6 @@
+name: codeplace
+build:
+  cmake: zephyr
+  kconfig: zephyr/Kconfig
+samples:
+  - samples

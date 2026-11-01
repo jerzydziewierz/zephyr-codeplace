@@ -7,7 +7,7 @@ description: Measure and improve code placement on a microcontroller that execut
 
 Goal: find out whether a firmware hot path is limited by instruction fetch from external flash, and if so, put the right code in fast memory (SRAM, ITCM) or lay it out so that it fits the cache. Every step gives a number with an error bar; decide from numbers, not from expectations.
 
-Tools: the `codeplace` Python package in this repository (`python -m codeplace profile|pick|colour|check`), samplers in `samplers/`. Zephyr is the reference integration; the method is not Zephyr-specific.
+Tools in this repository: the `codeplace` Python package (`python -m codeplace profile|pick|colour|check|callers`), the Zephyr module (`zephyr/`: on-target PC sampler, `CONFIG_CODEPLACE_PC_SAMPLER`), host tools in `tools/`, and the benchmark sample `samples/usb_udp_echo`. Zephyr is the reference integration; the method is not Zephyr-specific.
 
 ## 0. Rules
 
@@ -30,8 +30,8 @@ Build these A/B images and measure both metrics:
 
 ## 2. Where is the time? (PC sampling)
 
-- With SWD/JTAG: `samplers/openocd/dwt_pcsr.sh` reads DWT_PCSR while the target runs (non-intrusive, ~1–5 k samples/s).
-- Without a probe: an on-target sampler (`samplers/zephyr-imxrt-pit/`): a timer interrupt above the kernel's interrupt lock level records the stacked PC into a buffer; its code in tightly coupled/fast memory and its buffer in non-cached fast data memory, so that it does not disturb the caches or the flash. Vary the interval (LFSR) against aliasing.
+- With SWD/JTAG: `tools/dwt_pcsr.sh` reads DWT_PCSR while the target runs (non-intrusive, ~1–5 k samples/s).
+- Without a probe: an on-target sampler (i.MX RT: `CONFIG_CODEPLACE_PC_SAMPLER`, host `tools/pcs_host.py`): a timer interrupt above the kernel's interrupt lock level records the stacked PC into a buffer; its code in tightly coupled/fast memory and its buffer in non-cached fast data memory, so that it does not disturb the caches or the flash. Vary the interval (LFSR) against aliasing.
 - `python -m codeplace --windows <code ranges> profile <map> <pcs> --idle .text.arch_cpu_idle --line <cache line>` → busy share per memory window, per library, per function; executed lines.
 - Exclude idle and busy-wait functions (many samples, few misses).
 - Once compute-bound, find the expensive call sites: sample (PC, LR) pairs (`pcs start <hz> lr`) and run `codeplace callers <map> <pairs> --functions <f,...>`; LR is the caller for leaf functions (an estimate). Pair it with a micro-benchmark of the function (cycles per call) to estimate calls per event.

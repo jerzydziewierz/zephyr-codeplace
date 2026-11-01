@@ -1,0 +1,26 @@
+sample:
+  name: USB UDP echo (code placement benchmark)
+  description: UDP echo over USB CDC-NCM/ECM; hot path in fast memory by Kconfig or by a function list
+common:
+  tags: usb net codeplace
+  build_only: true
+  platform_allow:
+    - teensy41
+    - rpi_pico
+tests:
+  codeplace.usb_udp_echo.stock: {}
+  codeplace.usb_udp_echo.hot_path:
+    extra_conf_files:
+      - placement/hot-path.conf
+  codeplace.usb_udp_echo.fast:
+    platform_allow:
+      - teensy41
+    extra_conf_files:
+      - placement/hot-path.conf
+      - placement/tuning.conf
+  codeplace.usb_udp_echo.pc_sampler:
+    platform_allow:
+      - teensy41
+    extra_conf_files:
+      - placement/hot-path.conf
+      - placement/pc-sampler.conf

@@ -1,0 +1,23 @@
+/* Console and shell on USB CDC ACM, in the same USB device as CDC-NCM. */
+/ {
+	chosen {
+		zephyr,console = &cdc_acm_uart0;
+		zephyr,shell-uart = &cdc_acm_uart0;
+	};
+
+	usb_eth0: usb_eth0 {
+		compatible = "zephyr,cdc-ncm-ethernet";
+		local-mac-address = [02 00 5e 00 53 01];
+		remote-mac-address = "02005E005302";
+	};
+};
+
+&zephyr_udc0 {
+	cdc_acm_uart0: cdc_acm_uart0 {
+		compatible = "zephyr,cdc-acm-uart";
+	};
+};
+
+&enet_mac { status = "disabled"; };
+&enet_mdio { status = "disabled"; };
+&phy { status = "disabled"; };

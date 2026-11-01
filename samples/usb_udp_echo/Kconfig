@@ -1,0 +1,28 @@
+# SPDX-License-Identifier: Apache-2.0
+
+config SAMPLE_HOT_PATH_LIBS
+	bool "Network and USB stack libraries in fast memory"
+	select CODE_DATA_RELOCATION
+	help
+	  Relocates the network (IP, core, Ethernet L2, net_buf), USB device
+	  stack and UDC driver libraries to SAMPLE_HOT_PATH_REGION, as
+	  samples/net/zperf does.
+
+config SAMPLE_HOT_PATH_FILES
+	bool "Also kernel, arch and controller-driver files in fast memory (i.MX RT)"
+	depends on SAMPLE_HOT_PATH_LIBS && SOC_SERIES_IMXRT10XX
+	help
+	  Adds the scheduler, work queue, timeouts, mutex/semaphore/queue,
+	  context switch, MPU, SysTick, heap and the MCUX EHCI controller
+	  driver (placement/imxrt-hot-files.cmake). Code that runs before the
+	  relocation copy (SystemInit, memcpy, memset, reset) stays in flash.
+
+config SAMPLE_HOT_PATH_REGION
+	string "Memory region for the hot path"
+	default "ITCM" if SOC_SERIES_IMXRT10XX
+	default "RAM"
+	help
+	  Zephyr memory region name for zephyr_code_relocate(): ITCM on
+	  i.MX RT, RAM (SRAM) on the RP2040.
+
+source "Kconfig.zephyr"
