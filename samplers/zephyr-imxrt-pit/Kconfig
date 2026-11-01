@@ -1,0 +1,10 @@
+# Add to the application Kconfig (before source "Kconfig.zephyr").
+config CODEPLACE_PC_SAMPLER
+	bool "codeplace on-target PC sampler (PIT interrupt, ITCM handler, DTCM buffer)"
+	depends on SOC_SERIES_IMXRT10XX
+	select ZERO_LATENCY_IRQS
+
+config CODEPLACE_PC_SAMPLER_N
+	int "Number of PC samples per run"
+	depends on CODEPLACE_PC_SAMPLER
+	default 16384

@@ -1,0 +1,14 @@
+[workspace]
+name = "codeplace"
+version = "0.1.0"
+description = "Code placement for MCUs that execute from cached flash"
+channels = ["https://repo.anaconda.com/pkgs/main"]
+platforms = ["linux-64"]
+
+[dependencies]
+python = ">=3.11"
+pyserial = "*"
+
+[tasks]
+test = "python -m unittest discover -s tests"
+codeplace = "python -m codeplace"
