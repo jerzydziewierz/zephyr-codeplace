@@ -22,7 +22,7 @@ Write-ups: [Pico](https://www.rey.wiki/george/blog/2026-11-01-pico-flash-layout/
 | `codeplace/` | Python package, standard library only: GNU ld map parser; PC samples → time per memory window, library, function; executed cache lines; densest-function picker with emitters for `zephyr_code_relocate(... FILTER ...)` and `.ramfunc` snippets; cache colouring for any (sets, ways, line) geometry; placement check; caller attribution from (PC, LR) pairs. |
 | `zephyr/` | Zephyr module. `CONFIG_CODEPLACE_PC_SAMPLER`: on-target PC sampler for i.MX RT10xx (PIT interrupt at zero-latency priority, handler in ITCM, buffer in DTCM, shell command `pcs`). |
 | `samples/usb_udp_echo/` | Benchmark workload: UDP echo over USB CDC-NCM/ECM, with the placement chosen at build time (whole libraries, kernel/driver files, or a function list) and the tuning that pays after placement. |
-| `tools/` | `udp_echo_sweep.py` (rate sweep, standard library), `pcs_host.py` (drive the on-target sampler), `dwt_pcsr.sh` (PC sampling over SWD with openocd). |
+| `tools/` | `udp_echo_sweep.py` (rate sweep, standard library), `plot_sweeps.py` (figures, matplotlib), `pcs_host.py` (drive the on-target sampler), `dwt_pcsr.sh` (PC sampling over SWD with openocd). |
 | `skill/SKILL.md` | The procedure as a checklist for an engineer or an AI coding agent: decision points, measurement rules, footguns. |
 | `tests/` | Unit tests (`python -m unittest discover -s tests`). |
 

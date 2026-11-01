@@ -39,6 +39,19 @@ Kconfig of the sample: `CONFIG_SAMPLE_HOT_PATH_LIBS` (libraries), `CONFIG_SAMPLE
 
 ## Results (Teensy 4.1, CDC-NCM, Zephyr main of 2026-10-31)
 
-RESULTS_TABLE
+| Variant | Fast memory | Peak UDP echo (32 B, 2 passes) |
+|---|---|---|
+| stock | 0 | 2,238/s |
+| `list32` (32 KB function list) | 32 KB ITCM | 16,246/s |
+| `hot` (`hot-path.conf`) | 66 KB ITCM | 16,943/s |
+| `fast` (+ `tuning.conf`) | 77 KB ITCM | 21,370/s |
+| `fast-dtcm` (+ DTCM overlay) | 77 KB ITCM + data in DTCM | **22,586/s** (10.1×) |
+
+1000-byte datagrams, echoed in full (1 pass): stock 1,678/s, `fast-dtcm` 10,812/s (10.8 MB/s in each direction).
+
+![peaks](doc/sample-peaks.png)
+![replies vs offered rate](doc/sample-goodput.png)
+
+Open point (not analysed): in all ITCM variants some replies are missing between about 6,500 and 14,000 requests/s offered (round trip rises to about 300 µs), and above 14,500/s everything is echoed again. A test application with `poll()` and non-blocking batch reads did not show this on the same board. 🥦 Host CDC-NCM aggregation (several datagrams per transfer) against the small receive packet pool (`CONFIG_NET_PKT_RX_COUNT=8`) and the one-at-a-time blocking loop. Stock CDC-NCM collapses beyond its peak (to about 300/s).
 
 Notes: the `-O2`/no-stack-guard/no-time-slicing tuning is worth little while the code still runs from flash; measure it after placement. Without the stack guard a stack overflow is no longer detected. Do not set `CONFIG_NET_TC_RX_COUNT=0`/`TX_COUNT=0` for throughput: lower latency, but a third less throughput and collapse under overload (measured in the companion test application).
