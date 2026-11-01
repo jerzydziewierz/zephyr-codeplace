@@ -10,8 +10,12 @@ On MCUs without on-chip flash the CPU fetches code through a small cache from QS
 
 | Board | Workload | Stock | After placement | Fast memory used |
 |---|---|---|---|---|
-| Raspberry Pi Pico (RP2040, 125 MHz, 16 KB XIP cache) | UDP echo over USB CDC-ECM, peak rate | 322/s | 2,248/s (hot functions in SRAM + cache colouring + LTO) | 17 KB SRAM |
-| Teensy 4.1 (i.MX RT1062, 600 MHz, 32 KB I-cache) | UDP echo over USB, peak rate | 2,257/s | 15,921/s (32 KB hot-function list in ITCM); 22,359/s (network, USB, kernel in ITCM, `-O2`, CDC-NCM, tuning) | 34–78 KB ITCM |
+| Raspberry Pi Pico <br/>RP2040, 125 MHz<br/> 16 KB XIP cache) | UDP echo over USB CDC-ECM, <br/> peak rate | 322/s | 2,248/s () | 17 KB SRAM |
+| Teensy 4.1 <br/>i.MX RT1062, 600 MHz<br/> 32 KB I-cache) | UDP echo over USB, <br/>peak rate | 2,257/s | (a) 15,921/s;<br/> (b) 22,359/s | (a)34KB ITCM<br/>(b)78 KB ITCM |
+
+RP2040 methods used: hot functions in SRAM + cache colouring + LTO
+
+Teensy 4.1 methods used: (a) 32 KB hot-function list in ITCM;  (b) network, USB, kernel in ITCM, `-O2`, CDC-NCM, tuning;
 
 Write-ups: [Pico](https://www.rey.wiki/george/blog/2026-11-01-pico-flash-layout/), [Teensy](https://www.rey.wiki/george/blog/2026-11-01-teensy-usb-itcm/).
 
