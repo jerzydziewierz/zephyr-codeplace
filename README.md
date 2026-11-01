@@ -11,7 +11,7 @@ Verified on a Raspberry Pi Pico (RP2040) and a Teensy 4.1 (i.MX RT1062) with Zep
 On MCUs without on-chip flash the CPU fetches code through a small cache from QSPI flash. When the working set of a hot path is larger than the cache, each event reloads much of it from flash, and a fast core spends most of its time waiting. The Zephyr USB network path is such a case:
 
 | Board | Workload | Stock | After placement | Fast memory used | uplift |
-|---|---|---|---|---|
+|---|---|---|---|---|---|
 | **Raspberry Pi Pico** <br/>RP2040, 125 MHz<br/> 16 KB XIP cache) | UDP echo over USB CDC-ECM, <br/> peak rate | 322/s | 2,248/s () | 17 KB SRAM | **~7x** |
 | **Teensy 4.1** <br/>i.MX RT1062, 600 MHz<br/> 32 KB I-cache) | UDP echo over USB, <br/>peak rate | 2,257/s | (a) 15,921/s;<br/> (b) 22,359/s | (a)34KB ITCM<br/>(b)78 KB ITCM | **~10x** |
 
